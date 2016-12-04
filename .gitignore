@@ -1,3 +1,10 @@
+# vgg network
+*.mat
+
+# images
+*.jpg
+*.jpeg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
