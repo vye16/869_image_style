@@ -24,6 +24,8 @@ netfile = 'imagenet-vgg-verydeep-19.mat'
 def get_network(image):
     data = loadmat(netfile);
     vgg_layers = data['layers'].flatten()
+    avg_image = data['normalization']['averageImage'][0,0]
+    channel_avg = avg_image.mean(axis=(0,1))
 
     network = {}
 
@@ -53,4 +55,4 @@ def get_network(image):
 
         # update input layer
         input_layer = network[name]
-    return network
+    return network, channel_avg

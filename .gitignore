@@ -2,7 +2,6 @@
 *.mat
 
 # images
-*.jpg
 *.jpeg
 
 # Byte-compiled / optimized / DLL files

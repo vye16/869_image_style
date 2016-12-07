@@ -21,11 +21,11 @@ def get_content_rep(content_im):
     with g.as_default(), tf.Session() as sess:
         image = tf.placeholder('float',
                 shape=(1,nrows,ncols,nchannels))
-        net = get_network(image)
+        net, channel_avg = get_network(image)
         # get network responses for our content image
         # output size is 1 x nrows x ncols x nfilters
         content_rep[CONTENT_LAYER] = net[CONTENT_LAYER].eval(
-                feed_dict={image:[content_im]})
+                feed_dict={image:[content_im - channel_avg]})
     return content_rep
 
 
@@ -36,12 +36,12 @@ def get_style_rep(style_im):
     with g.as_default(), tf.Session() as sess:
         image = tf.placeholder('float',
                 shape=(1,nrows,ncols,nchannels))
-        net = get_network(image)
+        net, channel_avg = get_network(image)
         # get network responses of style image
         for layer in STYLE_LAYERS:
             # output size is 1 x nrows x ncols x nfilters
             responses = net[layer].eval(
-                    feed_dict={image:[style_im]})
+                    feed_dict={image:[style_im - channel_avg]})
             # compute cross correlations between filter responses
             nfilters = responses.shape[-1]
             responses = responses.reshape((-1, nfilters))
@@ -100,7 +100,7 @@ def synthesize(content, style,
     # optimizing the image
     shape = (1,) + content_im.shape
     image = tf.Variable(tf.random_normal(shape) * 0.2, name='image')
-    net = get_network(image)
+    net, channel_avg = get_network(image)
     total_loss = content_loss_op(net, content_rep, content_weight)\
                     + style_loss_op(net, style_rep, style_weight)\
                     + smoothing_loss_op(image, smooth_weight)
@@ -114,17 +114,15 @@ def synthesize(content, style,
         for i in xrange(iterations):
             print 'Iteration', i
             train_step.run()
-        im_out = image.eval().squeeze()
+        im_out = image.eval().squeeze() + channel_avg
     return im_out, content_im, style_im
 
 if __name__=="__main__":
 
     from scipy.misc import imread, imsave
 
-    nyc = imread('nyc.jpeg')
-    rain = imread('rain_princess.jpeg')
+    content = imread('in/content.jpg')
+    style = imread('in/style.jpg')
 
-    out, content, style = synthesize(nyc, rain)
-    imsave('out.jpg', out)
-    imsave('content.jpg', content)
-    imsave('style.jpg', style)
+    out, _, _ = synthesize(content, style)
+    imsave('out/out.jpg', out)
