@@ -89,7 +89,7 @@ def smoothing_loss_op(image, smooth_weight):
 
 def synthesize(content, style,
         iterations=1000, learning_rate=1e0,
-        content_weight=5, style_weight=1e2, smooth_weight=1e2):
+        content_weight=1, style_weight=1e2, smooth_weight=1e2):
 
     # XXX just to make faster on my machine
     content_im = imresize(content, [256, 256])
