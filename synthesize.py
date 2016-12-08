@@ -106,7 +106,7 @@ def synthesize(content, style,
                     + smoothing_loss_op(image, smooth_weight)
 
     train_step = tf.train.AdamOptimizer(learning_rate).\
-                            minimize(total_loss)
+                            minimize(2*total_loss)
 
     im_out = None
     with tf.Session() as sess:
@@ -121,8 +121,8 @@ if __name__=="__main__":
 
     from scipy.misc import imread, imsave
 
-    content = imread('in/content.jpg')
+    content = imread('in/stata.jpg')
     style = imread('in/style.jpg')
 
     out, _, _ = synthesize(content, style)
-    imsave('out/out.jpg', out)
+    imsave('out/out_stat_1000.jpg', out)

@@ -30,8 +30,10 @@ def get_network(image):
     network = {}
 
     input_layer = image
+    prev_name = 'image'
     for layer in vgg_layers:
         name = str(layer['name'][0,0][0])
+        print prev_name, name
         if name.startswith('conv'):
             filters, bias = layer['weights'][0,0].flatten()
             # tf axes for filters [height, width, in, out]
@@ -54,5 +56,6 @@ def get_network(image):
             continue
 
         # update input layer
+        prev_name = name
         input_layer = network[name]
     return network, channel_avg
