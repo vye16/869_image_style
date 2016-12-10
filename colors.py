@@ -26,8 +26,10 @@ def transfer_color(content, styles):
         style_inv = np.linalg.inv(style_sqrt_cov)
         A = content_sqrt_cov.dot(style_inv)
         b = content_mean - A.dot(style_mean)
-        new_style = np.sum(A[None,None,:,:] * style[:,:,None,:],
-                            axis=2) + b[None,None,:]
+        new_style = np.zeros(style.shape)
+        for r in range(style.shape[0]):
+            for c in range(style.shape[1]):
+                new_style[r,c,:] = A.dot(style[r,c,:]) + b
         new_styles.append(new_style)
     return new_styles
 
