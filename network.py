@@ -30,7 +30,6 @@ def get_network(image):
     network = {}
 
     input_layer = image
-    prev_name = 'image'
     for layer in vgg_layers:
         name = str(layer['name'][0,0][0])
         if name.startswith('conv'):
@@ -46,7 +45,7 @@ def get_network(image):
         elif name.startswith('pool'):
             # the paper uses average pooling instead of max pooling
             # downsample by 2 in height and width
-            network[name] = tf.nn.avg_pool(input_layer,
+            network[name] = tf.nn.max_pool(input_layer,
                     ksize=[1,2,2,1], strides=[1,2,2,1],
                     padding='SAME')
 
@@ -57,7 +56,5 @@ def get_network(image):
             continue
 
         # update input layer
-        print prev_name, name
-        prev_name = name
         input_layer = network[name]
     return network, channel_avg

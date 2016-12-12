@@ -33,6 +33,31 @@ def transfer_color(content, styles):
         new_styles.append(new_style)
     return new_styles
 
+
+def rgb2yiq(im):
+    newim = np.zeros(im.shape)
+    nrows, ncols, _ = im.shape
+    A = np.array(
+            [[0.299, 0.587, 0.114],
+             [0.596, -0.274, -0.322],
+             [0.211, -0.523, 0.312]])
+    for i in range(nrows):
+        for j in range(ncols):
+            newim[i,j,:] = A.dot(im[i,j,:])
+    return newim
+
+def yiq2rgb(im):
+    newim = np.zeros(im.shape)
+    nrows, ncols, _ = im.shape
+    A = np.array(
+            [[1, 0.956, 0.621],
+             [1, -0.272, -0.647],
+             [1, -1.106, 1.703]])
+    for i in range(nrows):
+        for j in range(ncols):
+            newim[i,j,:] = A.dot(im[i,j,:])
+    return newim
+
 def imread(path):
     return scipy.misc.imread(path).astype(np.float)
 

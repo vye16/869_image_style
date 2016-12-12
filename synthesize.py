@@ -4,6 +4,7 @@ import numpy as np
 from scipy.misc import imresize
 
 from network import get_network
+
 '''
 Each layer is a filter bank of nfilters filters
 of height x width x nchannels
@@ -61,15 +62,14 @@ def style_loss_op(net, style_rep, style_weight):
     # style loss operator
     loss = 0
     g = tf.Graph()
-    with g.as_default(), tf.Session() as sess:
-        for layer in STYLE_LAYERS:
-            # output of conv_respons is 1 x nrows x ncols x nfilters
-            responses = net[layer]
-            nfilters = responses.get_shape()[-1].value
-            size = np.prod(responses.get_shape()[1:]).value
-            resp = tf.reshape(responses, (-1, nfilters))
-            gram = tf.matmul(tf.transpose(resp), resp) / size
-            loss += tf.nn.l2_loss(gram - style_rep[layer]) / size
+    for layer in STYLE_LAYERS:
+        # output of conv_respons is 1 x nrows x ncols x nfilters
+        responses = net[layer]
+        nfilters = responses.get_shape()[-1].value
+        size = np.prod(responses.get_shape()[1:]).value
+        resp = tf.reshape(responses, (-1, nfilters))
+        gram = tf.matmul(tf.transpose(resp), resp) / size
+        loss += tf.nn.l2_loss(gram - style_rep[layer]) / size
     return style_weight * loss
 
 
@@ -89,7 +89,7 @@ def smoothing_loss_op(image, smooth_weight):
 
 def synthesize(content, style,
         iterations=1000, learning_rate=1e0,
-        content_weight=1, style_weight=1e2, smooth_weight=1e2):
+        content_weight=5, style_weight=1e2, smooth_weight=1e2):
 
     # XXX just to make faster on my machine
     content_im = imresize(content, [256, 256])
@@ -99,30 +99,41 @@ def synthesize(content, style,
 
     # optimizing the image
     shape = (1,) + content_im.shape
-    image = tf.Variable(tf.random_normal(shape) * 0.2, name='image')
-    net, channel_avg = get_network(image)
-    total_loss = content_loss_op(net, content_rep, content_weight)\
-                    + style_loss_op(net, style_rep, style_weight)\
-                    + smoothing_loss_op(image, smooth_weight)
+    with tf.Graph().as_default():
+        image = tf.Variable(tf.random_normal(shape) * 0.2)
+        net, channel_avg = get_network(image)
+ 
+        cont_loss = content_loss_op(net, content_rep, content_weight)
+        style_loss = style_loss_op(net, style_rep, style_weight)
+        smooth_loss = smoothing_loss_op(image, smooth_weight)
+        total_loss = 2 * (cont_loss + style_loss + smooth_loss)
 
-    train_step = tf.train.AdamOptimizer(learning_rate).\
-                            minimize(2*total_loss)
+        train_step = tf.train.AdamOptimizer(learning_rate).\
+                                minimize(total_loss)
 
-    im_out = None
-    with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
-        for i in xrange(iterations):
-            print 'Iteration', i
-            train_step.run()
-        im_out = image.eval().squeeze() + channel_avg
-    return im_out, content_im, style_im
+        im_out = None
+        with tf.Session() as sess:
+            sess.run(tf.initialize_all_variables())
+            for i in xrange(iterations):
+                print 'Iteration', i
+                train_step.run()
+            im_out = image.eval().squeeze() + channel_avg
+    return im_out
 
 if __name__=="__main__":
+    import scipy.misc
 
-    from scipy.misc import imread, imsave
+    def imread(path):
+        return scipy.misc.imread(path).astype(np.float)
+
+
+    def imsave(path, img):
+        img = np.clip(img, 0, 255).astype(np.uint8)
+        scipy.misc.imsave(path, img)
+
 
     content = imread('in/stata.jpg')
     style = imread('in/style.jpg')
 
-    out, _, _ = synthesize(content, style)
-    imsave('out/out_stat_1000.jpg', out)
+    out  = synthesize(content, style)
+    imsave('out/please_god.jpg', out)
