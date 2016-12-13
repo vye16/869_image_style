@@ -136,4 +136,4 @@ if __name__=="__main__":
     style = imread('in/style.jpg')
 
     out  = synthesize(content, style)
-    imsave('out/please_god.jpg', out)
+    imsave('out/synthesize.jpg', out)
